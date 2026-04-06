@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
+<!--
+-->
+
+<plugin>
+
+   <extension point="org.eclipse.ui.newWizards">
+      <!-- @generated rcl -->
+      <category
+            id="org.eclipse.emf.ecore.Wizard.category.ID"
+            name="%_UI_Wizard_category"/>
+      <wizard
+            id="uk.ac.york.cs.eng2.rcl.presentation.RclModelWizardID"
+            name="%_UI_RclModelWizard_label"
+            class="uk.ac.york.cs.eng2.rcl.presentation.RclModelWizard"
+            category="org.eclipse.emf.ecore.Wizard.category.ID"
+            icon="icons/full/obj16/RclModelFile.gif">
+         <description>%_UI_RclModelWizard_description</description>
+         <selection class="org.eclipse.core.resources.IResource"/>
+      </wizard>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors">
+      <!-- @generated rcl -->
+      <editor
+            id="uk.ac.york.cs.eng2.rcl.presentation.RclEditorID"
+            name="%_UI_RclEditor_label"
+            icon="icons/full/obj16/RclModelFile.gif"
+            extensions="rcl"
+            class="uk.ac.york.cs.eng2.rcl.presentation.RclEditor"
+            contributorClass="uk.ac.york.cs.eng2.rcl.presentation.RclActionBarContributor">
+      </editor>
+   </extension>
+
+</plugin>

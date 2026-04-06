@@ -1,0 +1,8 @@
+@namespace(uri="http://cs.york.ac.uk/eng2/rcl",prefix="r")
+package rcl;
+
+// Change the contents of this metamodel as you like!
+
+class Model {
+	
+}

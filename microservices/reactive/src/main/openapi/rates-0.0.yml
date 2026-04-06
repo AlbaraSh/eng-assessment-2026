@@ -1,0 +1,76 @@
+openapi: 3.0.1
+info:
+  title: rates
+  version: "0.0"
+paths:
+  /:
+    get:
+      tags:
+        - rates
+      operationId: getRates
+      responses:
+        "200":
+          description: getRates 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgileRatesResponse"
+components:
+  schemas:
+    AgileRate:
+      type: object
+      properties:
+        result:
+          $ref: "#/components/schemas/AgileRateResult"
+    AgileRateResult:
+      type: object
+      properties:
+        source:
+          type: string
+        prediction:
+          type: boolean
+        rate:
+          type: number
+          format: double
+    AgileRateWindow:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        averageRate:
+          type: number
+          format: double
+        prediction:
+          type: boolean
+    AgileRatesResponse:
+      type: object
+      properties:
+        result:
+          type: string
+        rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgileSlotRates"
+        cheapestWindowsPerSlot:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              $ref: "#/components/schemas/AgileRateWindow"
+    AgileSlotRates:
+      type: object
+      properties:
+        deliveryStart:
+          type: string
+          format: date-time
+        deliveryEnd:
+          type: string
+          format: date-time
+        agileRate:
+          $ref: "#/components/schemas/AgileRate"
+        agileOutgoingRate:
+          $ref: "#/components/schemas/AgileRate"

@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: EVL Validation for Reactive Computation DSL
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-SymbolicName: uk.ac.york.cs.eng2.rcl.evl;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: org.eclipse.epsilon.evl.emf.validation;bundle-version="2.0.0"
+Bundle-Vendor: University of York
+Automatic-Module-Name: uk.ac.york.cs.eng2.offers.evl

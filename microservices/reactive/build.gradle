@@ -1,0 +1,83 @@
+plugins {
+    id("io.micronaut.application") version "4.6.1"
+    id("com.gradleup.shadow") version "8.3.9"
+    id("io.micronaut.test-resources") version "4.6.1"
+    id("io.micronaut.aot") version "4.6.1"
+    id("io.micronaut.openapi") version "4.6.1"
+}
+
+version = "0.1"
+group = "uk.ac.york.eng2.reactive"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor("io.micronaut.data:micronaut-data-processor")
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+    annotationProcessor("io.micronaut.openapi:micronaut-openapi")
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+    implementation("io.micronaut.flyway:micronaut-flyway")
+    implementation("io.micronaut.kafka:micronaut-kafka")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut:micronaut-http-client")
+    compileOnly("io.micronaut.openapi:micronaut-openapi-annotations")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.flywaydb:flyway-mysql")
+    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // For the producer tests - note that Java 21 raises warning
+    // about functionality that may break in the future (OK for now!)
+    testImplementation(libs.mockito)
+}
+
+
+application {
+    mainClass = "uk.ac.york.eng2.reactive.Application"
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+
+graalvmNative.toolchainDetection = false
+
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("uk.ac.york.eng2.reactive.*")
+    }
+    testResources {
+        sharedServer = true
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+        replaceLogbackXml = true
+    }
+    openapi {
+        client("rates", file("src/main/openapi/rates-0.0.yml")) {
+            apiPackageName = "uk.ac.york.cs.eng2.reactive.rates.api"
+            modelPackageName = "uk.ac.york.cs.eng2.reactive.rates.model"
+            clientId = "rates"
+            useReactive = false
+        }
+    }
+}
+
+
+

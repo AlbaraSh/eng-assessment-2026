@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Developer Tools for Generator for ENG2 model solution
+Bundle-SymbolicName: uk.ac.york.cs.eng2.rcl.generator.dt;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: uk.ac.york.cs.eng2.rcl.generator,
+ org.eclipse.core.resources,
+ org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.emf.common;bundle-version="2.0.0"
+Bundle-Vendor: University of York
+Automatic-Module-Name: uk.ac.york.cs.eng2.offers.generator.dt
+Bundle-RequiredExecutionEnvironment: JavaSE-17

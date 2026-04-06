@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description:Group xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:description="http://www.eclipse.org/sirius/description/1.1.0" name="viewpoint" version="12.0.0.2017041100">
+  <ownedViewpoints name="uk.ac.york.cs.eng2.rcl.viewpoint" label="Reactive Computation Viewpoint" modelFileExtension="rcl">
+    <ownedJavaExtensions qualifiedClassName="uk.ac.york.cs.eng2.rcl.viewpoint.Services"/>
+  </ownedViewpoints>
+</description:Group>
