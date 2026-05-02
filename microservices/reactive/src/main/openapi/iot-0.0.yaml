@@ -1,0 +1,373 @@
+openapi: 3.0.1
+info:
+  title: iot
+  version: "0.0"
+paths:
+  /actuators:
+    get:
+      tags:
+        - actuators
+      operationId: getActuators
+      responses:
+        "200":
+          description: getActuators 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActuatorDTO"
+    post:
+      tags:
+        - actuators
+      operationId: createActuator
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActuatorCreateDTO"
+        required: true
+      responses:
+        "200":
+          description: createActuator 200 response
+  /actuators/{id}:
+    get:
+      tags:
+        - actuators
+      operationId: getActuator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getActuator 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActuatorDTO"
+    put:
+      tags:
+        - actuators
+      operationId: updateActuator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActuatorUpdateDTO"
+        required: true
+      responses:
+        "200":
+          description: updateActuator 200 response
+    delete:
+      tags:
+        - actuators
+      operationId: deleteActuator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: deleteActuator 200 response
+  /rooms:
+    get:
+      tags:
+        - rooms
+      operationId: getRooms
+      responses:
+        "200":
+          description: getRooms 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoomDTO"
+    post:
+      tags:
+        - rooms
+      operationId: createRoom
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomCreateDTO"
+        required: true
+      responses:
+        "200":
+          description: createRoom 200 response
+  /rooms/{id}:
+    get:
+      tags:
+        - rooms
+      operationId: getRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getRoom 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomDTO"
+    put:
+      tags:
+        - rooms
+      operationId: updateRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomUpdateDTO"
+        required: true
+      responses:
+        "200":
+          description: updateRoom 200 response
+    delete:
+      tags:
+        - rooms
+      operationId: deleteRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: deleteRoom 200 response
+  /sensors:
+    get:
+      tags:
+        - sensors
+      operationId: getSensors
+      responses:
+        "200":
+          description: getSensors 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorDTO"
+    post:
+      tags:
+        - sensors
+      operationId: createSensor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensorCreateDTO"
+        required: true
+      responses:
+        "200":
+          description: createSensor 200 response
+  /sensors/{id}:
+    get:
+      tags:
+        - sensors
+      operationId: getSensor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getSensor 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorDTO"
+    put:
+      tags:
+        - sensors
+      operationId: updateSensor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensorUpdateDTO"
+        required: true
+      responses:
+        "200":
+          description: updateSensor 200 response
+    delete:
+      tags:
+        - sensors
+      operationId: deleteSensor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: deleteSensor 200 response
+  /sensors/{id}/readings:
+    get:
+      tags:
+        - sensors
+      operationId: getSensorReadings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getSensorReadings 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadingDTO"
+components:
+  schemas:
+    ActuatorCreateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+        targetState:
+          type: string
+    ActuatorDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+        targetState:
+          type: string
+    ActuatorUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+        targetState:
+          type: string
+    ReadingDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        sensorId:
+          type: integer
+          format: int64
+        takenAt:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+    RoomCreateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+    RoomDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    RoomUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+    SensorCreateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+    SensorDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+    SensorUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        roomId:
+          type: integer
+          format: int64

@@ -55,4 +55,19 @@ micronaut {
         optimizeNetty = true
         replaceLogbackXml = true
     }
+    openapi {
+        client("iot", file("src/main/openapi/iot-0.0.yaml")) {
+            apiPackageName = "uk.ac.york.eng2.end2end.iot.api"
+            modelPackageName = "uk.ac.york.eng2.end2end.iot.model"
+            clientId = "iot"
+            useReactive = false
+        }
+
+        client("reactive", file("src/main/openapi/reactive-0.0.yaml")) {
+            apiPackageName = "uk.ac.york.eng2.end2end.reactive.api"
+            modelPackageName = "uk.ac.york.eng2.end2end.reactive.model"
+            clientId = "reactive"
+            useReactive = false
+        }
+    }
 }

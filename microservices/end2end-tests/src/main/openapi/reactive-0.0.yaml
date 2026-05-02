@@ -1,0 +1,124 @@
+openapi: 3.0.1
+info:
+  title: reactive
+  version: "0.0"
+paths:
+  /components:
+    get:
+      tags:
+        - components
+      operationId: getComponents
+      responses:
+        "200":
+          description: getComponents 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ComponentDTO"
+  /components/{id}:
+    get:
+      tags:
+        - components
+      operationId: getComponent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getComponent 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComponentDTO"
+  /topic-slots:
+    get:
+      tags:
+        - topic-slots
+      operationId: getTopicSlots
+      responses:
+        "200":
+          description: getTopicSlots 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicSlotDTO"
+  /topic-slots/topic/{topicName}:
+    get:
+      tags:
+        - topic-slots
+      operationId: getTopicSlotsForTopic
+      parameters:
+        - name: topicName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: getTopicSlotsForTopic 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicSlotDTO"
+  /topic-slots/{id}:
+    get:
+      tags:
+        - topic-slots
+      operationId: getTopicSlot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: getTopicSlot 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopicSlotDTO"
+components:
+  schemas:
+    ComponentDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    TopicSlotDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        topicName:
+          type: string
+        slotName:
+          type: string
+        slotType:
+          type: string
+        timestampValue:
+          type: string
+          format: date-time
+        textValue:
+          type: string
+        doubleValue:
+          type: number
+          format: double
+        longValue:
+          type: integer
+          format: int64

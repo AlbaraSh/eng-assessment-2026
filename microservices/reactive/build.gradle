@@ -33,6 +33,8 @@ dependencies {
     // For the producer tests - note that Java 21 raises warning
     // about functionality that may break in the future (OK for now!)
     testImplementation(libs.mockito)
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
 }
 
 
@@ -74,6 +76,13 @@ micronaut {
             apiPackageName = "uk.ac.york.cs.eng2.reactive.rates.api"
             modelPackageName = "uk.ac.york.cs.eng2.reactive.rates.model"
             clientId = "rates"
+            useReactive = false
+        }
+
+        client("iot", file("src/main/openapi/iot-0.0.yaml")) {
+            apiPackageName = "uk.ac.york.eng2.reactive.iot.api"
+            modelPackageName = "uk.ac.york.eng2.reactive.iot.model"
+            clientId = "iot"
             useReactive = false
         }
     }
