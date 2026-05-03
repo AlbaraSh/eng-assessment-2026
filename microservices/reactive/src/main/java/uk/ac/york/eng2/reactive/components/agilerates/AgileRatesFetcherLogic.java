@@ -1,29 +1,25 @@
-package uk.ac.york.eng2.reactive.components;
+package uk.ac.york.eng2.reactive.components.agilerates;
 
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.serde.ObjectMapper;
-import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import uk.ac.york.cs.eng2.reactive.rates.model.AgileRatesResponse;
+import uk.ac.york.cs.eng2.reactive.rates.model.AgileSlotRates;
+import uk.ac.york.eng2.reactive.components.AgileRatesSnapshot;
 import uk.ac.york.eng2.reactive.kafka.AgileRatesProducer;
 import uk.ac.york.eng2.reactive.service.ComponentService;
 import uk.ac.york.eng2.reactive.service.TopicSlotService;
-import uk.ac.york.cs.eng2.reactive.rates.api.RatesApi;
-import uk.ac.york.cs.eng2.reactive.rates.model.AgileRatesResponse;
-import uk.ac.york.cs.eng2.reactive.rates.model.AgileSlotRates;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 
-@Context
 @Singleton
 @Requires(notEnv = Environment.TEST)
-public class AgileRatesFetcher {
+public class AgileRatesFetcherLogic {
 
     public static final String COMPONENT_NAME = "AgileRatesFetcher";
     public static final String TOPIC_NAME = "agile-rates";
@@ -38,31 +34,18 @@ public class AgileRatesFetcher {
     private AgileRatesProducer producer;
 
     @Inject
-    private RatesApi ratesApi;
+    private AgileRatesGateway agileRatesGateway;
 
     @Inject
     private ObjectMapper objectMapper;
 
     @PostConstruct
-    public void registerAndFetch() {
+    public void register() {
         componentService.ensureExists(COMPONENT_NAME);
-        tryFetch();
     }
 
-    @Scheduled(fixedDelay = "12h", initialDelay = "12h")
-    public void fetchEvery12Hours() {
-        tryFetch();
-    }
-
-    @Scheduled(fixedDelay = "10s", initialDelay = "5s")
-    public void retryUntilAvailable() {
-        boolean alreadyFetched = topicSlotService.getTextValue(TOPIC_NAME, "json").isPresent();
-        if (!alreadyFetched) {
-            tryFetch();
-        }
-    }
-
-    protected void tryFetch() {
+    @PostConstruct
+    public void tryFetch() {
         try {
             fetchAndPublish();
         } catch (Exception e) {
@@ -70,8 +53,17 @@ public class AgileRatesFetcher {
         }
     }
 
+    public void retryUntilAvailable() {
+        boolean alreadyFetched = topicSlotService.getTextValue(TOPIC_NAME, "json").isPresent();
+        if (!alreadyFetched) {
+            tryFetch();
+        }
+    }
+
+
+
     protected void fetchAndPublish() {
-        AgileRatesResponse response = ratesApi.getRates();
+        AgileRatesResponse response = agileRatesGateway.getRates();
         AgileRatesSnapshot snapshot = toSnapshot(response);
 
         topicSlotService.saveTextSlot(TOPIC_NAME, "json", snapshot.getJson());
@@ -92,6 +84,7 @@ public class AgileRatesFetcher {
         snapshot.setJson(toJson(response));
 
         List<AgileSlotRates> rates = response.getRates();
+
         if (rates != null && !rates.isEmpty()) {
             AgileSlotRates first = rates.stream()
                     .filter(r -> r.getDeliveryStart() != null)
@@ -115,7 +108,7 @@ public class AgileRatesFetcher {
         return snapshot;
     }
 
-    protected String toJson(AgileRatesResponse response) {
+    public String toJson(AgileRatesResponse response) {
         try {
             return objectMapper.writeValueAsString(response);
         } catch (IOException e) {

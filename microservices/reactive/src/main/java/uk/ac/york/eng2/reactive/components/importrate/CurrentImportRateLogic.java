@@ -1,17 +1,16 @@
-package uk.ac.york.eng2.reactive.components;
+package uk.ac.york.eng2.reactive.components.importrate;
 
-import io.micronaut.configuration.kafka.annotation.KafkaListener;
-import io.micronaut.configuration.kafka.annotation.Topic;
-import io.micronaut.scheduling.annotation.Scheduled;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import uk.ac.york.cs.eng2.reactive.rates.model.AgileRatesResponse;
+import uk.ac.york.cs.eng2.reactive.rates.model.AgileSlotRates;
+import uk.ac.york.eng2.reactive.components.AgileRatesSnapshot;
+import uk.ac.york.eng2.reactive.components.CurrentRateSnapshot;
 import uk.ac.york.eng2.reactive.kafka.CurrentImportRateProducer;
 import uk.ac.york.eng2.reactive.service.ComponentService;
 import uk.ac.york.eng2.reactive.service.TopicSlotService;
-import uk.ac.york.cs.eng2.reactive.rates.model.AgileRatesResponse;
-import uk.ac.york.cs.eng2.reactive.rates.model.AgileSlotRates;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -19,11 +18,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
-@KafkaListener(groupId = "current-import-rate-extractor")
-public class CurrentImportRateExtractor {
+public class CurrentImportRateLogic {
 
     public static final String COMPONENT_NAME = "CurrentImportRateExtractor";
-    public static final String INPUT_TOPIC = "agile-rates";
     public static final String OUTPUT_TOPIC = "current-import-rate";
     public static final String AGILE_RATES_TOPIC = "agile-rates";
     public static final String JSON_SLOT = "json";
@@ -47,8 +44,7 @@ public class CurrentImportRateExtractor {
         componentService.ensureExists(COMPONENT_NAME);
     }
 
-    @Topic(INPUT_TOPIC)
-    public void receive(String key, AgileRatesSnapshot snapshot) {
+    public void receive(AgileRatesSnapshot snapshot) {
         if (snapshot == null || snapshot.getJson() == null || snapshot.getJson().trim().isEmpty()) {
             return;
         }
@@ -56,9 +52,9 @@ public class CurrentImportRateExtractor {
         recomputeFromJson(snapshot.getJson());
     }
 
-    @Scheduled(fixedRate = "30m", initialDelay = "30m")
     public void recomputeEvery30Minutes() {
         Optional<String> json = getLatestAgileRatesJson();
+
         if (json.isEmpty()) {
             return;
         }
@@ -66,14 +62,15 @@ public class CurrentImportRateExtractor {
         recomputeFromJson(json.get());
     }
 
-    @Scheduled(fixedDelay = "10s", initialDelay = "5s")
     public void retryUntilCurrentImportRateAvailable() {
         boolean alreadyComputed = topicSlotService.getDoubleValue(OUTPUT_TOPIC, RATE_SLOT).isPresent();
+
         if (alreadyComputed) {
             return;
         }
 
         Optional<String> json = getLatestAgileRatesJson();
+
         if (json.isEmpty()) {
             return;
         }
@@ -83,9 +80,11 @@ public class CurrentImportRateExtractor {
 
     protected Optional<String> getLatestAgileRatesJson() {
         Optional<String> json = topicSlotService.getTextValue(AGILE_RATES_TOPIC, JSON_SLOT);
+
         if (json.isEmpty() || json.get().trim().isEmpty()) {
             return Optional.empty();
         }
+
         return json;
     }
 
@@ -99,6 +98,7 @@ public class CurrentImportRateExtractor {
 
         AgileSlotRates slot = currentSlot.get();
         Double rate = extractImportRate(slot);
+
         if (rate == null) {
             return;
         }
@@ -149,6 +149,7 @@ public class CurrentImportRateExtractor {
         if (slot.getAgileRate() == null || slot.getAgileRate().getResult() == null) {
             return null;
         }
+
         return slot.getAgileRate().getResult().getRate();
     }
 }
