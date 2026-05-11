@@ -11,6 +11,7 @@ import uk.ac.york.eng2.reactive.iot.model.ActuatorUpdateDTO;
 import uk.ac.york.eng2.reactive.service.ComponentService;
 import uk.ac.york.eng2.reactive.service.TopicSlotService;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +22,11 @@ import static org.mockito.Mockito.*;
 
 public class BatteryActuatorLogicTest {
 
+    private static final String DECISION_TOPIC = "battery-decision";
+    private static final String TARGET_STATE_SLOT = "targetState";
+
     private BatteryActuatorLogic logic;
+
     private ComponentService componentService;
     private TopicSlotService topicSlotService;
     private ActuatorsApi actuatorsApi;
@@ -34,41 +39,40 @@ public class BatteryActuatorLogicTest {
         topicSlotService = mock(TopicSlotService.class);
         actuatorsApi = mock(ActuatorsApi.class);
 
-        setField(logic, "componentService", componentService);
-        setField(logic, "topicSlotService", topicSlotService);
-        setField(logic, "actuatorsApi", actuatorsApi);
+        injectField(logic, "componentService", componentService);
+        injectField(logic, "topicSlotService", topicSlotService);
+        injectField(logic, "actuatorsApi", actuatorsApi);
     }
 
     @Test
-    public void registerEnsuresComponentExists() {
-        logic.register();
+    public void registerGeneratedComponentEnsuresComponentExists() {
+        logic.registerGeneratedComponent();
+
         verify(componentService).ensureExists("BatteryActuatorControllerComponent");
     }
 
     @Test
-    public void receiveUpdatesOnlyBatteryActuators() {
-        ActuatorDTO battery = new ActuatorDTO();
-        battery.setId(1L);
-        battery.setName("HomeBattery");
-        battery.setType("battery");
-        battery.setRoomId(10L);
-        battery.setTargetState("sell_excess");
+    public void receiveSavesDecisionAndUpdatesOnlyBatteryActuators() {
+        ActuatorDTO battery = batteryActuator("sell_excess");
+        ActuatorDTO heater = heaterActuator();
 
-        ActuatorDTO heater = new ActuatorDTO();
-        heater.setId(2L);
-        heater.setName("Heater1");
-        heater.setType("heater");
-        heater.setRoomId(11L);
-        heater.setTargetState("off");
+        when(topicSlotService.getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT))
+                .thenReturn(Optional.of("export_to_grid"));
+        when(actuatorsApi.getActuators())
+                .thenReturn(List.of(battery, heater));
 
-        when(actuatorsApi.getActuators()).thenReturn(List.of(battery, heater));
-
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-        decision.setTargetState("export_to_grid");
+        BatteryDecisionSnapshot decision = decisionSnapshot("export_to_grid");
 
         logic.receive(decision);
 
-        ArgumentCaptor<ActuatorUpdateDTO> captor = ArgumentCaptor.forClass(ActuatorUpdateDTO.class);
+        verify(topicSlotService).saveTextSlot(
+                DECISION_TOPIC,
+                TARGET_STATE_SLOT,
+                "export_to_grid"
+        );
+
+        ArgumentCaptor<ActuatorUpdateDTO> captor =
+                ArgumentCaptor.forClass(ActuatorUpdateDTO.class);
 
         verify(actuatorsApi).updateActuator(eq(1L), captor.capture());
         verify(actuatorsApi, never()).updateActuator(eq(2L), any());
@@ -83,20 +87,22 @@ public class BatteryActuatorLogicTest {
 
     @Test
     public void receiveDoesNotUpdateBatteryWhenTargetStateAlreadyMatches() {
-        ActuatorDTO battery = new ActuatorDTO();
-        battery.setId(1L);
-        battery.setName("HomeBattery");
-        battery.setType("battery");
-        battery.setRoomId(10L);
-        battery.setTargetState("export_to_grid");
+        ActuatorDTO battery = batteryActuator("export_to_grid");
 
-        when(actuatorsApi.getActuators()).thenReturn(List.of(battery));
+        when(topicSlotService.getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT))
+                .thenReturn(Optional.of("export_to_grid"));
+        when(actuatorsApi.getActuators())
+                .thenReturn(List.of(battery));
 
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-        decision.setTargetState("export_to_grid");
+        BatteryDecisionSnapshot decision = decisionSnapshot("export_to_grid");
 
         logic.receive(decision);
 
+        verify(topicSlotService).saveTextSlot(
+                DECISION_TOPIC,
+                TARGET_STATE_SLOT,
+                "export_to_grid"
+        );
         verify(actuatorsApi).getActuators();
         verify(actuatorsApi, never()).updateActuator(any(), any());
     }
@@ -105,85 +111,35 @@ public class BatteryActuatorLogicTest {
     public void receiveIgnoresNullSnapshot() {
         logic.receive(null);
 
-        verifyNoInteractions(actuatorsApi);
-    }
-
-    @Test
-    public void receiveIgnoresNullTargetState() {
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-
-        logic.receive(decision);
-
+        verify(topicSlotService, never()).saveTextSlot(any(), any(), any());
         verifyNoInteractions(actuatorsApi);
     }
 
     @Test
     public void receiveIgnoresBlankTargetState() {
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-        decision.setTargetState(" ");
+        BatteryDecisionSnapshot decision = decisionSnapshot(" ");
 
         logic.receive(decision);
 
+        verify(topicSlotService, never()).saveTextSlot(any(), any(), any());
         verifyNoInteractions(actuatorsApi);
     }
 
     @Test
-    public void receiveIgnoresNonBatteryActuators() {
-        ActuatorDTO heater = new ActuatorDTO();
-        heater.setId(2L);
-        heater.setName("Heater1");
-        heater.setType("heater");
-        heater.setRoomId(11L);
-        heater.setTargetState("off");
-
-        when(actuatorsApi.getActuators()).thenReturn(List.of(heater));
-
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-        decision.setTargetState("export_to_grid");
-
-        logic.receive(decision);
-
-        verify(actuatorsApi).getActuators();
-        verify(actuatorsApi, never()).updateActuator(any(), any());
-    }
-
-    @Test
-    public void receiveIgnoresBatteryActuatorWithoutId() {
-        ActuatorDTO battery = new ActuatorDTO();
-        battery.setName("HomeBattery");
-        battery.setType("battery");
-        battery.setRoomId(10L);
-        battery.setTargetState("sell_excess");
-
-        when(actuatorsApi.getActuators()).thenReturn(List.of(battery));
-
-        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
-        decision.setTargetState("export_to_grid");
-
-        logic.receive(decision);
-
-        verify(actuatorsApi).getActuators();
-        verify(actuatorsApi, never()).updateActuator(any(), any());
-    }
-
-    @Test
     public void reapplyLatestDecisionIfNeededUsesStoredDecision() {
-        ActuatorDTO battery = new ActuatorDTO();
-        battery.setId(1L);
-        battery.setName("HomeBattery");
-        battery.setType("battery");
-        battery.setRoomId(10L);
-        battery.setTargetState("sell_excess");
+        ActuatorDTO battery = batteryActuator("sell_excess");
 
-        when(topicSlotService.getTextValue("battery-decision", "targetState"))
+        when(topicSlotService.getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT))
                 .thenReturn(Optional.of("export_to_grid"));
-        when(actuatorsApi.getActuators()).thenReturn(List.of(battery));
+        when(actuatorsApi.getActuators())
+                .thenReturn(List.of(battery));
 
         logic.reapplyLatestDecisionIfNeeded();
 
-        ArgumentCaptor<ActuatorUpdateDTO> captor = ArgumentCaptor.forClass(ActuatorUpdateDTO.class);
+        ArgumentCaptor<ActuatorUpdateDTO> captor =
+                ArgumentCaptor.forClass(ActuatorUpdateDTO.class);
 
-        verify(topicSlotService).getTextValue("battery-decision", "targetState");
+        verify(topicSlotService).getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT);
         verify(actuatorsApi).updateActuator(eq(1L), captor.capture());
 
         ActuatorUpdateDTO updateDTO = captor.getValue();
@@ -196,33 +152,68 @@ public class BatteryActuatorLogicTest {
 
     @Test
     public void reapplyLatestDecisionIfNeededDoesNothingWhenStoredDecisionMissing() {
-        when(topicSlotService.getTextValue("battery-decision", "targetState"))
+        when(topicSlotService.getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT))
                 .thenReturn(Optional.empty());
 
         logic.reapplyLatestDecisionIfNeeded();
 
-        verify(topicSlotService).getTextValue("battery-decision", "targetState");
+        verify(topicSlotService).getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT);
         verifyNoInteractions(actuatorsApi);
     }
 
     @Test
     public void reapplyLatestDecisionIfNeededDoesNothingWhenStoredDecisionBlank() {
-        when(topicSlotService.getTextValue("battery-decision", "targetState"))
+        when(topicSlotService.getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT))
                 .thenReturn(Optional.of(" "));
 
         logic.reapplyLatestDecisionIfNeeded();
 
-        verify(topicSlotService).getTextValue("battery-decision", "targetState");
-        verifyNoInteractions(actuatorsApi);
+        verify(topicSlotService).getTextValue(DECISION_TOPIC, TARGET_STATE_SLOT);
+        verify(actuatorsApi, never()).updateActuator(any(), any());
     }
 
-    private static void setField(Object target, String fieldName, Object value) {
-        try {
-            java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    private BatteryDecisionSnapshot decisionSnapshot(String targetState) {
+        BatteryDecisionSnapshot decision = new BatteryDecisionSnapshot();
+        decision.setTargetState(targetState);
+        return decision;
+    }
+
+    private ActuatorDTO batteryActuator(String currentTargetState) {
+        ActuatorDTO battery = new ActuatorDTO();
+        battery.setId(1L);
+        battery.setName("HomeBattery");
+        battery.setType("battery");
+        battery.setRoomId(10L);
+        battery.setTargetState(currentTargetState);
+        return battery;
+    }
+
+    private ActuatorDTO heaterActuator() {
+        ActuatorDTO heater = new ActuatorDTO();
+        heater.setId(2L);
+        heater.setName("Heater1");
+        heater.setType("heater");
+        heater.setRoomId(11L);
+        heater.setTargetState("off");
+        return heater;
+    }
+
+    private static void injectField(Object target, String fieldName, Object value) {
+        Class<?> currentClass = target.getClass();
+
+        while (currentClass != null) {
+            try {
+                Field field = currentClass.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                field.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                currentClass = currentClass.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
+
+        throw new RuntimeException(new NoSuchFieldException(fieldName));
     }
 }

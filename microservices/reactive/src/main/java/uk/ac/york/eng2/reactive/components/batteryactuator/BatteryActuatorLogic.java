@@ -1,55 +1,44 @@
 package uk.ac.york.eng2.reactive.components.batteryactuator;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import uk.ac.york.eng2.reactive.components.BatteryDecisionSnapshot;
+import uk.ac.york.eng2.reactive.components.generated.GeneratedBatteryActuatorControllerComponentBase;
 import uk.ac.york.eng2.reactive.iot.api.ActuatorsApi;
 import uk.ac.york.eng2.reactive.iot.model.ActuatorDTO;
 import uk.ac.york.eng2.reactive.iot.model.ActuatorUpdateDTO;
-import uk.ac.york.eng2.reactive.service.ComponentService;
-import uk.ac.york.eng2.reactive.service.TopicSlotService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Singleton
-public class BatteryActuatorLogic {
+public class BatteryActuatorLogic extends GeneratedBatteryActuatorControllerComponentBase {
 
-    public static final String COMPONENT_NAME = "BatteryActuatorControllerComponent";
     public static final String INPUT_TOPIC = "battery-decision";
     public static final String TARGET_STATE_SLOT = "targetState";
 
     @Inject
-    private ComponentService componentService;
-
-    @Inject
-    private TopicSlotService topicSlotService;
-
-    @Inject
     private ActuatorsApi actuatorsApi;
 
-    @PostConstruct
-    public void register() {
-        componentService.ensureExists(COMPONENT_NAME);
-    }
-
     public void receive(BatteryDecisionSnapshot snapshot) {
-        if (snapshot == null || snapshot.getTargetState() == null || snapshot.getTargetState().trim().isEmpty()) {
+        if (snapshot == null || isBlank(snapshot.getTargetState())) {
             return;
         }
 
-        applyTargetStateToBatteryActuators(snapshot.getTargetState());
+        topicSlotService.saveTextSlot(INPUT_TOPIC, TARGET_STATE_SLOT, snapshot.getTargetState());
+        trigger();
     }
 
     public void reapplyLatestDecisionIfNeeded() {
-        Optional<String> targetState = topicSlotService.getTextValue(INPUT_TOPIC, TARGET_STATE_SLOT);
+        trigger();
+    }
 
-        if (targetState.isEmpty() || targetState.get().trim().isEmpty()) {
+    @Override
+    protected void activate(String targetState) {
+        if (isBlank(targetState)) {
             return;
         }
 
-        applyTargetStateToBatteryActuators(targetState.get());
+        applyTargetStateToBatteryActuators(targetState);
     }
 
     protected void applyTargetStateToBatteryActuators(String targetState) {
@@ -77,5 +66,9 @@ public class BatteryActuatorLogic {
 
     protected boolean needsUpdate(ActuatorDTO actuator, String targetState) {
         return actuator.getTargetState() == null || !actuator.getTargetState().equals(targetState);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

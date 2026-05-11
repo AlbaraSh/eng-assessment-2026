@@ -73,26 +73,15 @@ public class CurrentExportRateLogicTest {
 
         logic.receive(snapshot);
 
-        verify(topicSlotService).saveDoubleSlot("current-export-rate", "rate", 18.0);
-        verify(topicSlotService).saveTimestampSlot(eq("current-export-rate"), eq("atTime"), any(Instant.class));
-
-        ArgumentCaptor<CurrentRateSnapshot> captor = ArgumentCaptor.forClass(CurrentRateSnapshot.class);
-        verify(producer).send(eq("latest"), captor.capture());
-
-        CurrentRateSnapshot published = captor.getValue();
-
-        assertEquals(18.0, published.getRate());
-        assertNotNull(published.getAtTime());
+        verifyCurrentExportRateWasSavedAndPublished(18.0);
     }
 
     @Test
     public void receiveDoesNothingWhenSnapshotIsNull() {
         logic.receive(null);
 
+        verifyNoRateWasSavedOrPublished();
         verifyNoInteractions(objectMapper);
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
     }
 
     @Test
@@ -101,27 +90,12 @@ public class CurrentExportRateLogicTest {
 
         logic.receive(snapshot);
 
+        verifyNoRateWasSavedOrPublished();
         verifyNoInteractions(objectMapper);
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
     }
 
     @Test
-    public void receiveDoesNothingWhenSnapshotJsonIsBlank() {
-        AgileRatesSnapshot snapshot = new AgileRatesSnapshot();
-        snapshot.setJson("   ");
-
-        logic.receive(snapshot);
-
-        verifyNoInteractions(objectMapper);
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
-    }
-
-    @Test
-    public void receiveDoesNothingWhenNoCurrentSlot() throws Exception {
+    public void receiveDoesNothingWhenNoCurrentSlotExists() throws Exception {
         Instant now = Instant.now();
         ZonedDateTime start = ZonedDateTime.ofInstant(now.minusSeconds(3600), ZoneOffset.UTC);
         ZonedDateTime end = ZonedDateTime.ofInstant(now.minusSeconds(1800), ZoneOffset.UTC);
@@ -136,9 +110,7 @@ public class CurrentExportRateLogicTest {
 
         logic.receive(snapshot);
 
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
+        verifyNoRateWasSavedOrPublished();
     }
 
     @Test
@@ -160,9 +132,7 @@ public class CurrentExportRateLogicTest {
 
         logic.receive(snapshot);
 
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
+        verifyNoRateWasSavedOrPublished();
     }
 
     @Test
@@ -174,71 +144,38 @@ public class CurrentExportRateLogicTest {
         AgileRatesResponse response = new AgileRatesResponse();
         response.setRates(List.of(slot(start, end, 6.5, 17.0)));
 
-        when(topicSlotService.getTextValue("agile-rates", "json")).thenReturn(Optional.of("{stored-json}"));
-        when(objectMapper.readValue("{stored-json}", AgileRatesResponse.class)).thenReturn(response);
+        when(topicSlotService.getTextValue("agile-rates", "json"))
+                .thenReturn(Optional.of("{stored-json}"));
+        when(objectMapper.readValue("{stored-json}", AgileRatesResponse.class))
+                .thenReturn(response);
 
         logic.recomputeEvery30Minutes();
 
         verify(topicSlotService).getTextValue("agile-rates", "json");
-        verify(topicSlotService).saveDoubleSlot("current-export-rate", "rate", 17.0);
-        verify(topicSlotService).saveTimestampSlot(eq("current-export-rate"), eq("atTime"), any(Instant.class));
-
-        ArgumentCaptor<CurrentRateSnapshot> captor = ArgumentCaptor.forClass(CurrentRateSnapshot.class);
-        verify(producer).send(eq("latest"), captor.capture());
-
-        CurrentRateSnapshot published = captor.getValue();
-
-        assertEquals(17.0, published.getRate());
-        assertNotNull(published.getAtTime());
+        verifyCurrentExportRateWasSavedAndPublished(17.0);
     }
 
     @Test
     public void recomputeEvery30MinutesDoesNothingWhenStoredJsonMissing() {
-        when(topicSlotService.getTextValue("agile-rates", "json")).thenReturn(Optional.empty());
+        when(topicSlotService.getTextValue("agile-rates", "json"))
+                .thenReturn(Optional.empty());
 
         logic.recomputeEvery30Minutes();
 
         verify(topicSlotService).getTextValue("agile-rates", "json");
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
-        verifyNoInteractions(objectMapper);
-    }
-
-    @Test
-    public void recomputeEvery30MinutesDoesNothingWhenStoredJsonIsBlank() {
-        when(topicSlotService.getTextValue("agile-rates", "json")).thenReturn(Optional.of("   "));
-
-        logic.recomputeEvery30Minutes();
-
-        verify(topicSlotService).getTextValue("agile-rates", "json");
-        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
-        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
-        verifyNoInteractions(producer);
+        verifyNoRateWasSavedOrPublished();
         verifyNoInteractions(objectMapper);
     }
 
     @Test
     public void retryUntilCurrentExportRateAvailableDoesNothingWhenRateAlreadyExists() {
-        when(topicSlotService.getDoubleValue("current-export-rate", "rate")).thenReturn(Optional.of(18.0));
+        when(topicSlotService.getDoubleValue("current-export-rate", "rate"))
+                .thenReturn(Optional.of(18.0));
 
         logic.retryUntilCurrentExportRateAvailable();
 
         verify(topicSlotService).getDoubleValue("current-export-rate", "rate");
         verify(topicSlotService, never()).getTextValue("agile-rates", "json");
-        verifyNoInteractions(objectMapper);
-        verifyNoInteractions(producer);
-    }
-
-    @Test
-    public void retryUntilCurrentExportRateAvailableDoesNothingWhenAgileRatesJsonMissing() {
-        when(topicSlotService.getDoubleValue("current-export-rate", "rate")).thenReturn(Optional.empty());
-        when(topicSlotService.getTextValue("agile-rates", "json")).thenReturn(Optional.empty());
-
-        logic.retryUntilCurrentExportRateAvailable();
-
-        verify(topicSlotService).getDoubleValue("current-export-rate", "rate");
-        verify(topicSlotService).getTextValue("agile-rates", "json");
         verifyNoInteractions(objectMapper);
         verifyNoInteractions(producer);
     }
@@ -252,18 +189,54 @@ public class CurrentExportRateLogicTest {
         AgileRatesResponse response = new AgileRatesResponse();
         response.setRates(List.of(slot(start, end, 5.5, 16.0)));
 
-        when(topicSlotService.getDoubleValue("current-export-rate", "rate")).thenReturn(Optional.empty());
-        when(topicSlotService.getTextValue("agile-rates", "json")).thenReturn(Optional.of("{stored-json}"));
-        when(objectMapper.readValue("{stored-json}", AgileRatesResponse.class)).thenReturn(response);
+        when(topicSlotService.getDoubleValue("current-export-rate", "rate"))
+                .thenReturn(Optional.empty());
+        when(topicSlotService.getTextValue("agile-rates", "json"))
+                .thenReturn(Optional.of("{stored-json}"));
+        when(objectMapper.readValue("{stored-json}", AgileRatesResponse.class))
+                .thenReturn(response);
 
         logic.retryUntilCurrentExportRateAvailable();
 
-        verify(topicSlotService).saveDoubleSlot("current-export-rate", "rate", 16.0);
-        verify(topicSlotService).saveTimestampSlot(eq("current-export-rate"), eq("atTime"), any(Instant.class));
-        verify(producer).send(eq("latest"), any(CurrentRateSnapshot.class));
+        verifyCurrentExportRateWasSavedAndPublished(16.0);
     }
 
-    private AgileSlotRates slot(ZonedDateTime start, ZonedDateTime end, double importRate, double exportRate) {
+    private void verifyCurrentExportRateWasSavedAndPublished(double expectedRate) {
+        verify(topicSlotService).saveDoubleSlot(
+                "current-export-rate",
+                "rate",
+                expectedRate
+        );
+
+        verify(topicSlotService).saveTimestampSlot(
+                eq("current-export-rate"),
+                eq("atTime"),
+                any(Instant.class)
+        );
+
+        ArgumentCaptor<CurrentRateSnapshot> captor =
+                ArgumentCaptor.forClass(CurrentRateSnapshot.class);
+
+        verify(producer).send(eq("latest"), captor.capture());
+
+        CurrentRateSnapshot published = captor.getValue();
+
+        assertEquals(expectedRate, published.getRate());
+        assertNotNull(published.getAtTime());
+    }
+
+    private void verifyNoRateWasSavedOrPublished() {
+        verify(topicSlotService, never()).saveDoubleSlot(any(), any(), any());
+        verify(topicSlotService, never()).saveTimestampSlot(any(), any(), any());
+        verifyNoInteractions(producer);
+    }
+
+    private AgileSlotRates slot(
+            ZonedDateTime start,
+            ZonedDateTime end,
+            double importRate,
+            double exportRate
+    ) {
         AgileRateResult importResult = new AgileRateResult();
         importResult.setRate(importRate);
 

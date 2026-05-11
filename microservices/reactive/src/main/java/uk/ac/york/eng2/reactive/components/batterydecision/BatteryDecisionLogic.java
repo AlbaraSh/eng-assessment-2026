@@ -1,22 +1,17 @@
 package uk.ac.york.eng2.reactive.components.batterydecision;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import uk.ac.york.eng2.reactive.components.BatteryDecisionSnapshot;
 import uk.ac.york.eng2.reactive.components.CurrentRateSnapshot;
+import uk.ac.york.eng2.reactive.components.generated.GeneratedBatteryDecisionComponentBase;
 import uk.ac.york.eng2.reactive.kafka.BatteryDecisionProducer;
 import uk.ac.york.eng2.reactive.service.BatteryDecisionService;
-import uk.ac.york.eng2.reactive.service.ComponentService;
-import uk.ac.york.eng2.reactive.service.TopicSlotService;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Singleton
-public class BatteryDecisionLogic {
-
-    public static final String COMPONENT_NAME = "BatteryDecisionComponent";
+public class BatteryDecisionLogic extends GeneratedBatteryDecisionComponentBase {
 
     public static final String IMPORT_RATE_TOPIC = "current-import-rate";
     public static final String EXPORT_RATE_TOPIC = "current-export-rate";
@@ -27,21 +22,10 @@ public class BatteryDecisionLogic {
     public static final String AT_TIME_SLOT = "atTime";
 
     @Inject
-    private ComponentService componentService;
-
-    @Inject
-    private TopicSlotService topicSlotService;
-
-    @Inject
     private BatteryDecisionService batteryDecisionService;
 
     @Inject
     private BatteryDecisionProducer producer;
-
-    @PostConstruct
-    public void register() {
-        componentService.ensureExists(COMPONENT_NAME);
-    }
 
     public void receiveImportRate(CurrentRateSnapshot snapshot) {
         if (snapshot == null || snapshot.getRate() == null) {
@@ -54,7 +38,7 @@ public class BatteryDecisionLogic {
             topicSlotService.saveTimestampSlot(IMPORT_RATE_TOPIC, AT_TIME_SLOT, snapshot.getAtTime());
         }
 
-        tryDecideAndPublish();
+        trigger();
     }
 
     public void receiveExportRate(CurrentRateSnapshot snapshot) {
@@ -68,7 +52,7 @@ public class BatteryDecisionLogic {
             topicSlotService.saveTimestampSlot(EXPORT_RATE_TOPIC, AT_TIME_SLOT, snapshot.getAtTime());
         }
 
-        tryDecideAndPublish();
+        trigger();
     }
 
     public void retryUntilBatteryDecisionAvailable() {
@@ -80,18 +64,12 @@ public class BatteryDecisionLogic {
             return;
         }
 
-        tryDecideAndPublish();
+        trigger();
     }
 
-    protected void tryDecideAndPublish() {
-        Optional<Double> importRate = topicSlotService.getDoubleValue(IMPORT_RATE_TOPIC, RATE_SLOT);
-        Optional<Double> exportRate = topicSlotService.getDoubleValue(EXPORT_RATE_TOPIC, RATE_SLOT);
-
-        if (importRate.isEmpty() || exportRate.isEmpty()) {
-            return;
-        }
-
-        String targetState = batteryDecisionService.decideTargetState(importRate.get(), exportRate.get());
+    @Override
+    protected void activate(Double importRate, Double exportRate) {
+        String targetState = batteryDecisionService.decideTargetState(importRate, exportRate);
         Instant atTime = Instant.now();
 
         topicSlotService.saveTextSlot(BATTERY_DECISION_TOPIC, TARGET_STATE_SLOT, targetState);
