@@ -80,8 +80,8 @@ micronaut {
         }
 
         client("iot", file("src/main/openapi/iot-0.0.yaml")) {
-            apiPackageName = "uk.ac.york.eng2.reactive.iot.api"
-            modelPackageName = "uk.ac.york.eng2.reactive.iot.model"
+            apiPackageName = "uk.ac.york.cs.eng2.reactive.iot.api"
+            modelPackageName = "uk.ac.york.cs.eng2.reactive.iot.model"
             clientId = "iot"
             useReactive = false
         }

@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import uk.ac.york.eng2.reactive.components.BatteryDecisionSnapshot;
 import uk.ac.york.eng2.reactive.components.batteryactuator.BatteryActuatorLogic;
-import uk.ac.york.eng2.reactive.iot.api.ActuatorsApi;
-import uk.ac.york.eng2.reactive.iot.model.ActuatorDTO;
-import uk.ac.york.eng2.reactive.iot.model.ActuatorUpdateDTO;
+import uk.ac.york.cs.eng2.reactive.iot.api.ActuatorsApi;
+import uk.ac.york.cs.eng2.reactive.iot.model.ActuatorDTO;
+import uk.ac.york.cs.eng2.reactive.iot.model.ActuatorUpdateDTO;
 import uk.ac.york.eng2.reactive.service.ComponentService;
 import uk.ac.york.eng2.reactive.service.TopicSlotService;
 

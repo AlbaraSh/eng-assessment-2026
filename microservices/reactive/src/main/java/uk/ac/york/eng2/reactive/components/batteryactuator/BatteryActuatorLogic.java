@@ -4,9 +4,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import uk.ac.york.eng2.reactive.components.BatteryDecisionSnapshot;
 import uk.ac.york.eng2.reactive.components.generated.GeneratedBatteryActuatorControllerComponentBase;
-import uk.ac.york.eng2.reactive.iot.api.ActuatorsApi;
-import uk.ac.york.eng2.reactive.iot.model.ActuatorDTO;
-import uk.ac.york.eng2.reactive.iot.model.ActuatorUpdateDTO;
+import uk.ac.york.cs.eng2.reactive.iot.api.ActuatorsApi;
+import uk.ac.york.cs.eng2.reactive.iot.model.ActuatorDTO;
+import uk.ac.york.cs.eng2.reactive.iot.model.ActuatorUpdateDTO;
 
 import java.util.List;
 
