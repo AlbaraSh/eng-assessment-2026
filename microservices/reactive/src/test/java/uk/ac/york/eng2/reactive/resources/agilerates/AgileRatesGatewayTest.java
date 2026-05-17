@@ -6,6 +6,8 @@ import uk.ac.york.cs.eng2.reactive.rates.api.RatesApi;
 import uk.ac.york.cs.eng2.reactive.rates.model.AgileRatesResponse;
 import uk.ac.york.eng2.reactive.components.agilerates.AgileRatesGateway;
 
+import java.lang.reflect.Field;
+
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -38,7 +40,7 @@ public class AgileRatesGatewayTest {
 
     private static void setField(Object target, String fieldName, Object value) {
         try {
-            java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
+            Field field = target.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(target, value);
         } catch (Exception e) {

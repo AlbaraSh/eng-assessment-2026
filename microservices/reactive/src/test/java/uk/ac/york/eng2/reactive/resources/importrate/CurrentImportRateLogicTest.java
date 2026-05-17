@@ -15,6 +15,7 @@ import uk.ac.york.eng2.reactive.kafka.CurrentImportRateProducer;
 import uk.ac.york.eng2.reactive.service.ComponentService;
 import uk.ac.york.eng2.reactive.service.TopicSlotService;
 
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -260,7 +261,7 @@ public class CurrentImportRateLogicTest {
 
     private static void setField(Object target, String fieldName, Object value) {
         try {
-            java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
+            Field field = target.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(target, value);
         } catch (Exception e) {

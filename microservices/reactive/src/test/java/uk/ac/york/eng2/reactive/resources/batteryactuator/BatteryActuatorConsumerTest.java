@@ -6,6 +6,8 @@ import uk.ac.york.eng2.reactive.components.BatteryDecisionSnapshot;
 import uk.ac.york.eng2.reactive.components.batteryactuator.BatteryActuatorConsumer;
 import uk.ac.york.eng2.reactive.components.batteryactuator.BatteryActuatorLogic;
 
+import java.lang.reflect.Field;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -41,7 +43,7 @@ public class BatteryActuatorConsumerTest {
 
     private static void setField(Object target, String fieldName, Object value) {
         try {
-            java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
+            Field field = target.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(target, value);
         } catch (Exception e) {
