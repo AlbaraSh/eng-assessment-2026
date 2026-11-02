@@ -73,12 +73,14 @@ services:
   rates:
     build:
       context: ./rates
+      dockerfile: Dockerfile.manual
     ports:
       - "8082:8082"
 
   iot:
     build:
       context: ./iot
+      dockerfile: Dockerfile.manual
     ports:
       - "8080:8080"
     environment:
@@ -96,6 +98,7 @@ services:
   reactive:
     build:
       context: ./reactive
+      dockerfile: Dockerfile.manual
     ports:
       - "8081:8081"
     environment:

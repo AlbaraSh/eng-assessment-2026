@@ -26,3 +26,7 @@ replay_pid*
 
 # Mac temp files
 .DS_Store
+
+# Gradle caches and build outputs
+.gradle/
+build/
