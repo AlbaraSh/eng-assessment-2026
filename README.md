@@ -145,7 +145,7 @@ HTML reports: each module's `build/reports/tests/test/index.html`; XML: `build/t
 
 ## CI/CD workflow
 
-[GitHub Actions](.github/workflows/gradle.yml) runs on pushes and pull requests to `main` using Ubuntu, Temurin JDK 17 and the Gradle setup action. It invokes the same test script to build/test all services and run the Compose end-to-end suite, then uploads available HTML/XML reports even after failure. The job timeout is 30 minutes.
+[GitHub Actions](.github/workflows/gradle.yml) runs on pushes and pull requests to `main` using Ubuntu, Temurin JDK 17 and the Gradle setup action. It configures Docker API `1.44` for Test Resources because the default client API `1.32` was rejected by the hosted runner. It invokes the same test script to build/test all services and run the Compose end-to-end suite, then uploads available HTML/XML reports even after failure. The job timeout is 30 minutes.
 
 The original workflow ran only rates tests; IoT/reactive/end-to-end steps were commented out. Those checks are now enabled through the shared script. This is continuous integration: no image publication or cloud deployment stage is implemented.
 
